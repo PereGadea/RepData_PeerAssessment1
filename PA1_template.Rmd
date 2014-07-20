@@ -1,20 +1,150 @@
-# Reproducible Research: Peer Assessment 1
+# Reproducible Research. Peer Assessment 1
+========================================================
+
+R Markdown document for the Peer Assessment 1.  
+Part of the course "Reproducible Research".
+
+## Introduction
+This assignment makes use of data from a personal activity monitoring  device. This device collects data at 5 minute intervals through out the day.
+
+The data for this assignment can be downloaded from the [course web site] (https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip).  
 
 
 ## Loading and preprocessing the data
 
+**Unload & unzip**
+```{r echo = TRUE}
+setwd("~/R")
+fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file (fileURL, destfile = "~/R/data.zip")
+unzip("data.zip")
+```
+
+**Read & explore**
+```{r echo = TRUE}
+data.act <- read.csv("activity.csv", nrows = 17569) # import the file w/o changes
+````
+These commands will be used repeatedly throughout the work
+```{r echo = TRUE}
+head(data.act)
+tail(data.act)
+summary(data.act)
+str(data.act)
+````
+
+**Creates a new dataframe**  
+accumulated steps per date
+```{r echo = TRUE}
+steps.date <- aggregate(steps ~ date, data.act, sum)
+```
 
 
 ## What is mean total number of steps taken per day?
 
+**Make a histogram of the total number of steps taken each day**  
+clarification: x = total number of steps per day, y = frequency)
+```{r echo = TRUE}
+library(ggplot2)
+ggplot(steps.date, aes(x=steps)) + geom_histogram()
+```
 
+**Calculate and report the mean and median total number of steps taken per day**
+```{r echo = TRUE}
+paste ("The mean is", round(mean(steps.date$steps),2), "steps per day")
+paste ("The median is", median(steps.date$steps), "steps per day")
+```
 
-## What is the average daily activity pattern?
+## What is the average daily activity pattern?  
 
+**Make a time series plot of 5-minute interval and the average of steps taken, averaged across all days**
+```{r echo = TRUE}
+steps.interval <- aggregate(steps ~ interval, data.act, mean)
+ggplot(steps.interval, aes(x=interval, y=steps)) + geom_line() + ggtitle("Average daily activity") + ylab("Average number steps")
+```
+
+**Which 5-minute interval, on average across all the days in the dataset contains the maximum number of steps?**
+```{r echo = TRUE}
+paste("The highest number of steps corresponds to the interval", steps.interval[which.max(steps.interval$steps),][,1], "with", round(steps.interval[which.max(steps.interval$steps),][,2],2), "steps")
+```
 
 
 ## Imputing missing values
 
+**Calculate and report the total number of missing values**
+```{r echo =TRUE}
+paste("There are", sum(is.na(data.act$steps)), "rows with NA steps")
+paste("There is", sum(is.na(data.act$date)), "rows with NA dates")
+paste("There is", sum(is.na(data.act$interval)), "rows with NA intervals")
+```
+
+**Devise a strategy for filling in all of the missing values in the dataset**  
+strategy: replace NA values with the mean value of the same interval  
+  
+join two datasets by the variable "interval"
+```{r echo = TRUE}
+fill.data <- merge(data.act, steps.interval, by = "interval", sort = FALSE)
+```
+
+rename column names
+```{r echo =TRUE}
+colnames(fill.data) <- c("interval","steps","date","mean.steps.interval")
+```
+
+**Create a new dataset that is equal to the original dataset but with the NA values filled in**
+```{r echo = TRUE}
+fill.data$steps[is.na(fill.data$steps)] <- fill.data$mean.steps.interval[is.na(fill.data$steps)]
+```
+
+clean dataframe, erase last column (optional)
+```{r echo =TRUE}
+fill.data$mean.steps.interval <- NULL
+```
+
+**Make a histogram of the total number of steps taken each day**
+```{r echo = TRUE}
+fill.steps.date <- aggregate(steps ~ date, fill.data, sum)
+ggplot(fill.steps.date, aes(x=steps)) + geom_histogram() + ggtitle("Total number of days according to steps") + ylab("frecuency")
+```
+
+**Calculate and report the mean and median total number of steps taken per day**
+```{r echo = TRUE}
+paste("The new mean is", round(mean(fill.steps.date$steps),2), "steps by day")
+paste("The new median is", round(median(fill.steps.date$steps),2), "steps by day")
+```
+
+**Do these values differ from the estimates from the first part of the assignment?**  
+The difference between the new and old mean is:
+```{r echo=TRUE}
+paste("Old - New mean is equal to", round(mean(steps.date$steps) - mean(fill.steps.date$steps),2))
+```
+
+The difference between the new and old median is:
+```{r echo = TRUE}
+paste("Old - New median is equal to", round(median(steps.date$steps) - median(fill.steps.date$steps),2))
+``` 
+
+**What is the impact of imputing missing data on the estimates of the total daily number of steps?**  
+We observe that the mean no changes and the new median is larger than the last, approaching the mean
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+**Create dataset with the new factor**
+```{r echo=TRUE}
+day.data <- fill.data # duplicate dataset (optional)
+day.data$days <- as.factor(weekdays(as.Date(day.data$date))) # creates new factor
+levels(day.data$days) <- list(weekday = c("lunes", "martes", "miércoles","jueves", "viernes"), weekend = c("sábado", "domingo")) # fix levels of the new factor
+``` 
+*The names of the list depends de local language,*
+*alternatively, it can be fixed to english with*
+*Sys.setlocale("LC_TIME", "English") and the list is in english words.*
+
+**Make a panel plot of the 5-minute interval (x-axis) and the average number of steps taken**
+
+```{r echo= TRUE}  
+library(ggplot2)
+week.data <- aggregate(steps ~ interval+days, day.data, mean)
+p <- ggplot(week.data, aes(x=interval, y=steps)) + geom_line() + ylab("average steps") + ggtitle("daily activity") 
+p + facet_grid( .~days)
+```
+We can see that there are different patterns of behavior, associated, probably, with work schedules.
