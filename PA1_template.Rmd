@@ -1,8 +1,8 @@
-# Reproducible Research. Peer Assessment 1
+Reproducible Research. Peer Assessment 1
 ========================================================
 
-R Markdown document for the Peer Assessment 1.  
-Part of the course "Reproducible Research".
+R Markdown document for the Peer Assessment 1  
+Part of the course "Reproducible Research"
 
 ## Introduction
 This assignment makes use of data from a personal activity monitoring  device. This device collects data at 5 minute intervals through out the day.
@@ -14,6 +14,7 @@ The data for this assignment can be downloaded from the [course web site] (https
 
 **Unload & unzip**
 ```{r echo = TRUE}
+setInternet2(TRUE) # avoid error, source: R documentation (?download.file()
 setwd("~/R")
 fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file (fileURL, destfile = "~/R/data.zip")
@@ -21,16 +22,24 @@ unzip("data.zip")
 ```
 
 **Read & explore**
-```{r echo = TRUE}
+```{r reading, echo = TRUE}
 data.act <- read.csv("activity.csv", nrows = 17569) # import the file w/o changes
 ````
 These commands will be used repeatedly throughout the work
-```{r echo = TRUE}
+```{r exploring, echo = TRUE}
 head(data.act)
 tail(data.act)
 summary(data.act)
 str(data.act)
 ````
+
+Load the libraries that I use for the job
+```{r libraries, echo=TRUE}
+library(ggplot2)
+library(knitr)
+library(htmltools)
+library(rmarkdown)
+```
 
 **Creates a new dataframe**  
 accumulated steps per date
@@ -39,13 +48,13 @@ steps.date <- aggregate(steps ~ date, data.act, sum)
 ```
 
 
+
 ## What is mean total number of steps taken per day?
 
 **Make a histogram of the total number of steps taken each day**  
 clarification: x = total number of steps per day, y = frequency)
-```{r echo = TRUE}
-library(ggplot2)
-ggplot(steps.date, aes(x=steps)) + geom_histogram()
+```{r firstplot, echo = TRUE}
+ggplot(steps.date, aes(x=steps)) + geom_histogram(binwidth=500) + labs(title = "Total number \nof steps taken each day")
 ```
 
 **Calculate and report the mean and median total number of steps taken per day**
@@ -54,10 +63,12 @@ paste ("The mean is", round(mean(steps.date$steps),2), "steps per day")
 paste ("The median is", median(steps.date$steps), "steps per day")
 ```
 
+
+
 ## What is the average daily activity pattern?  
 
 **Make a time series plot of 5-minute interval and the average of steps taken, averaged across all days**
-```{r echo = TRUE}
+```{r secondplot, echo = TRUE}
 steps.interval <- aggregate(steps ~ interval, data.act, mean)
 ggplot(steps.interval, aes(x=interval, y=steps)) + geom_line() + ggtitle("Average daily activity") + ylab("Average number steps")
 ```
@@ -66,6 +77,7 @@ ggplot(steps.interval, aes(x=interval, y=steps)) + geom_line() + ggtitle("Averag
 ```{r echo = TRUE}
 paste("The highest number of steps corresponds to the interval", steps.interval[which.max(steps.interval$steps),][,1], "with", round(steps.interval[which.max(steps.interval$steps),][,2],2), "steps")
 ```
+
 
 
 ## Imputing missing values
@@ -101,9 +113,9 @@ fill.data$mean.steps.interval <- NULL
 ```
 
 **Make a histogram of the total number of steps taken each day**
-```{r echo = TRUE}
+```{r thirdplot, echo = TRUE}
 fill.steps.date <- aggregate(steps ~ date, fill.data, sum)
-ggplot(fill.steps.date, aes(x=steps)) + geom_histogram() + ggtitle("Total number of days according to steps") + ylab("frecuency")
+ggplot(fill.steps.date, aes(x=steps)) + geom_histogram(binwidth=500) + ggtitle("Total number of days according to steps") + ylab("frecuency")
 ```
 
 **Calculate and report the mean and median total number of steps taken per day**
@@ -113,18 +125,19 @@ paste("The new median is", round(median(fill.steps.date$steps),2), "steps by day
 ```
 
 **Do these values differ from the estimates from the first part of the assignment?**  
-The difference between the new and old mean is:
+
 ```{r echo=TRUE}
-paste("Old - New mean is equal to", round(mean(steps.date$steps) - mean(fill.steps.date$steps),2))
+paste("The difference between the old and the new mean is equal to", round(mean(steps.date$steps) - mean(fill.steps.date$steps),2))
 ```
 
-The difference between the new and old median is:
+
 ```{r echo = TRUE}
-paste("Old - New median is equal to", round(median(steps.date$steps) - median(fill.steps.date$steps),2))
+paste("The difference between the old and the new median is equal to", round(median(steps.date$steps) - median(fill.steps.date$steps),2))
 ``` 
 
 **What is the impact of imputing missing data on the estimates of the total daily number of steps?**  
 We observe that the mean no changes and the new median is larger than the last, approaching the mean
+
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -141,10 +154,10 @@ levels(day.data$days) <- list(weekday = c("lunes", "martes", "miércoles","jueves
 
 **Make a panel plot of the 5-minute interval (x-axis) and the average number of steps taken**
 
-```{r echo= TRUE}  
-library(ggplot2)
+```{r lastplot, echo= TRUE}  
 week.data <- aggregate(steps ~ interval+days, day.data, mean)
 p <- ggplot(week.data, aes(x=interval, y=steps)) + geom_line() + ylab("average steps") + ggtitle("daily activity") 
 p + facet_grid( .~days)
 ```
+
 We can see that there are different patterns of behavior, associated, probably, with work schedules.

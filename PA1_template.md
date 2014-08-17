@@ -1,8 +1,8 @@
 # Reproducible Research. Peer Assessment 1
 ========================================================
 
-R Markdown document for the Peer Assessment 1.  
-Part of the course "Reproducible Research".
+R Markdown document for the Peer Assessment 1  
+Part of the course "Reproducible Research"
 
 ## Introduction
 This assignment makes use of data from a personal activity monitoring  device. This device collects data at 5 minute intervals through out the day.
@@ -17,24 +17,15 @@ The data for this assignment can be downloaded from the [course web site] (https
 ```r
 setwd("~/R")
 fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
-download.file(fileURL, destfile = "~/R/data.zip")
-```
-
-```
-## Error: esquema de URL sin soporte
-```
-
-```r
+download.file (fileURL, destfile = "~/R/data.zip")
 unzip("data.zip")
 ```
-
 
 **Read & explore**
 
 ```r
-data.act <- read.csv("activity.csv", nrows = 17569)  # import the file w/o changes
+data.act <- read.csv("activity.csv", nrows = 17569) # import the file w/o changes
 ```
-
 These commands will be used repeatedly throughout the work
 
 ```r
@@ -91,6 +82,14 @@ str(data.act)
 ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 
+Load the libraries that I use for the job
+
+```r
+library(ggplot2)
+library(knitr)
+library(htmltools)
+library(rmarkdown)
+```
 
 **Creates a new dataframe**  
 accumulated steps per date
@@ -100,7 +99,6 @@ steps.date <- aggregate(steps ~ date, data.act, sum)
 ```
 
 
-
 ## What is mean total number of steps taken per day?
 
 **Make a histogram of the total number of steps taken each day**  
@@ -108,20 +106,15 @@ clarification: x = total number of steps per day, y = frequency)
 
 ```r
 library(ggplot2)
-ggplot(steps.date, aes(x = steps)) + geom_histogram()
+ggplot(steps.date, aes(x=steps)) + geom_histogram(binwidth=500) + labs(title = "Total number \nof steps taken each day")
 ```
 
-```
-## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
-```
-
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
-
+![plot of chunk firstplot](figure/firstplot.png) 
 
 **Calculate and report the mean and median total number of steps taken per day**
 
 ```r
-paste("The mean is", round(mean(steps.date$steps), 2), "steps per day")
+paste ("The mean is", round(mean(steps.date$steps),2), "steps per day")
 ```
 
 ```
@@ -129,13 +122,12 @@ paste("The mean is", round(mean(steps.date$steps), 2), "steps per day")
 ```
 
 ```r
-paste("The median is", median(steps.date$steps), "steps per day")
+paste ("The median is", median(steps.date$steps), "steps per day")
 ```
 
 ```
 ## [1] "The median is 10765 steps per day"
 ```
-
 
 ## What is the average daily activity pattern?  
 
@@ -143,25 +135,20 @@ paste("The median is", median(steps.date$steps), "steps per day")
 
 ```r
 steps.interval <- aggregate(steps ~ interval, data.act, mean)
-ggplot(steps.interval, aes(x = interval, y = steps)) + geom_line() + ggtitle("Average daily activity") + 
-    ylab("Average number steps")
+ggplot(steps.interval, aes(x=interval, y=steps)) + geom_line() + ggtitle("Average daily activity") + ylab("Average number steps")
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7.png) 
-
+![plot of chunk secondplot](figure/secondplot.png) 
 
 **Which 5-minute interval, on average across all the days in the dataset contains the maximum number of steps?**
 
 ```r
-paste("The highest number of steps corresponds to the interval", steps.interval[which.max(steps.interval$steps), 
-    ][, 1], "with", round(steps.interval[which.max(steps.interval$steps), ][, 
-    2], 2), "steps")
+paste("The highest number of steps corresponds to the interval", steps.interval[which.max(steps.interval$steps),][,1], "with", round(steps.interval[which.max(steps.interval$steps),][,2],2), "steps")
 ```
 
 ```
 ## [1] "The highest number of steps corresponds to the interval 835 with 206.17 steps"
 ```
-
 
 
 ## Imputing missing values
@@ -192,7 +179,6 @@ paste("There is", sum(is.na(data.act$interval)), "rows with NA intervals")
 ## [1] "There is 0 rows with NA intervals"
 ```
 
-
 **Devise a strategy for filling in all of the missing values in the dataset**  
 strategy: replace NA values with the mean value of the same interval  
   
@@ -202,13 +188,11 @@ join two datasets by the variable "interval"
 fill.data <- merge(data.act, steps.interval, by = "interval", sort = FALSE)
 ```
 
-
 rename column names
 
 ```r
-colnames(fill.data) <- c("interval", "steps", "date", "mean.steps.interval")
+colnames(fill.data) <- c("interval","steps","date","mean.steps.interval")
 ```
-
 
 **Create a new dataset that is equal to the original dataset but with the NA values filled in**
 
@@ -216,33 +200,25 @@ colnames(fill.data) <- c("interval", "steps", "date", "mean.steps.interval")
 fill.data$steps[is.na(fill.data$steps)] <- fill.data$mean.steps.interval[is.na(fill.data$steps)]
 ```
 
-
 clean dataframe, erase last column (optional)
 
 ```r
 fill.data$mean.steps.interval <- NULL
 ```
 
-
 **Make a histogram of the total number of steps taken each day**
 
 ```r
 fill.steps.date <- aggregate(steps ~ date, fill.data, sum)
-ggplot(fill.steps.date, aes(x = steps)) + geom_histogram() + ggtitle("Total number of days according to steps") + 
-    ylab("frecuency")
+ggplot(fill.steps.date, aes(x=steps)) + geom_histogram(binwidth=500) + ggtitle("Total number of days according to steps") + ylab("frecuency")
 ```
 
-```
-## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
-```
-
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14.png) 
-
+![plot of chunk thirdplot](figure/thirdplot.png) 
 
 **Calculate and report the mean and median total number of steps taken per day**
 
 ```r
-paste("The new mean is", round(mean(fill.steps.date$steps), 2), "steps by day")
+paste("The new mean is", round(mean(fill.steps.date$steps),2), "steps by day")
 ```
 
 ```
@@ -250,38 +226,33 @@ paste("The new mean is", round(mean(fill.steps.date$steps), 2), "steps by day")
 ```
 
 ```r
-paste("The new median is", round(median(fill.steps.date$steps), 2), "steps by day")
+paste("The new median is", round(median(fill.steps.date$steps),2), "steps by day")
 ```
 
 ```
 ## [1] "The new median is 10766.19 steps by day"
 ```
 
-
 **Do these values differ from the estimates from the first part of the assignment?**  
 The difference between the new and old mean is:
 
 ```r
-paste("Old - New mean is equal to", round(mean(steps.date$steps) - mean(fill.steps.date$steps), 
-    2))
+paste("Old - New mean is equal to", round(mean(steps.date$steps) - mean(fill.steps.date$steps),2))
 ```
 
 ```
 ## [1] "Old - New mean is equal to 0"
 ```
 
-
 The difference between the new and old median is:
 
 ```r
-paste("Old - New median is equal to", round(median(steps.date$steps) - median(fill.steps.date$steps), 
-    2))
+paste("Old - New median is equal to", round(median(steps.date$steps) - median(fill.steps.date$steps),2))
 ```
 
 ```
 ## [1] "Old - New median is equal to -1.19"
 ```
-
 
 **What is the impact of imputing missing data on the estimates of the total daily number of steps?**  
 We observe that the mean no changes and the new median is larger than the last, approaching the mean
@@ -292,12 +263,10 @@ We observe that the mean no changes and the new median is larger than the last, 
 **Create dataset with the new factor**
 
 ```r
-day.data <- fill.data  # duplicate dataset (optional)
-day.data$days <- as.factor(weekdays(as.Date(day.data$date)))  # creates new factor
-levels(day.data$days) <- list(weekday = c("lunes", "martes", "miércoles", "jueves", 
-    "viernes"), weekend = c("sábado", "domingo"))  # fix levels of the new factor
+day.data <- fill.data # duplicate dataset (optional)
+day.data$days <- as.factor(weekdays(as.Date(day.data$date))) # creates new factor
+levels(day.data$days) <- list(weekday = c("lunes", "martes", "miércoles","jueves", "viernes"), weekend = c("sábado", "domingo")) # fix levels of the new factor
 ```
-
 *The names of the list depends de local language,*
 *alternatively, it can be fixed to english with*
 *Sys.setlocale("LC_TIME", "English") and the list is in english words.*
@@ -307,12 +276,10 @@ levels(day.data$days) <- list(weekday = c("lunes", "martes", "miércoles", "jueve
 
 ```r
 library(ggplot2)
-week.data <- aggregate(steps ~ interval + days, day.data, mean)
-p <- ggplot(week.data, aes(x = interval, y = steps)) + geom_line() + ylab("average steps") + 
-    ggtitle("daily activity")
-p + facet_grid(. ~ days)
+week.data <- aggregate(steps ~ interval+days, day.data, mean)
+p <- ggplot(week.data, aes(x=interval, y=steps)) + geom_line() + ylab("average steps") + ggtitle("daily activity") 
+p + facet_grid( .~days)
 ```
 
-![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19.png) 
-
+![plot of chunk lastplot](figure/lastplot.png) 
 We can see that there are different patterns of behavior, associated, probably, with work schedules.
